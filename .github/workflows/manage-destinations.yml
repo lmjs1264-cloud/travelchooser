@@ -1,0 +1,77 @@
+name: Manage Destinations
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Add or remove a destination'
+        required: true
+        type: choice
+        options:
+          - add
+          - remove
+      name:
+        description: >-
+          For add: display name, e.g. "Denver, CO". For remove: name or
+          IATA code of the destination to remove.
+        required: true
+      code:
+        description: 'IATA airport/city code (add only — leave blank to auto-look-up)'
+        required: false
+      category:
+        description: 'Category (add only)'
+        required: false
+        default: 'suggested'
+        type: choice
+        options:
+          - suggested
+          - visited
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Add destination
+        if: ${{ inputs.action == 'add' }}
+        env:
+          AMADEUS_API_KEY: ${{ secrets.AMADEUS_API_KEY }}
+          AMADEUS_API_SECRET: ${{ secrets.AMADEUS_API_SECRET }}
+          DEST_NAME: ${{ inputs.name }}
+          DEST_CODE: ${{ inputs.code }}
+          DEST_CATEGORY: ${{ inputs.category }}
+        run: |
+          if [ -n "$DEST_CODE" ]; then
+            python scripts/manage_destinations.py add "$DEST_NAME" "$DEST_CODE" --category "$DEST_CATEGORY"
+          else
+            python scripts/manage_destinations.py add "$DEST_NAME" --category "$DEST_CATEGORY"
+          fi
+
+      - name: Remove destination
+        if: ${{ inputs.action == 'remove' }}
+        env:
+          DEST_IDENTIFIER: ${{ inputs.name }}
+        run: python scripts/manage_destinations.py remove "$DEST_IDENTIFIER"
+
+      - name: Refresh pricing
+        env:
+          AMADEUS_API_KEY: ${{ secrets.AMADEUS_API_KEY }}
+          AMADEUS_API_SECRET: ${{ secrets.AMADEUS_API_SECRET }}
+        run: python scripts/fetch_pricing.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/destinations.json PRICING.md
+          git diff --quiet --cached || git commit -m "Update destinations list"
+          git push

@@ -6,48 +6,27 @@ Requires AMADEUS_API_KEY and AMADEUS_API_SECRET in the environment.
 Writes results to PRICING.md in the repo root.
 """
 import datetime
+import json
 import os
 import sys
 import time
+from pathlib import Path
 
 import requests
 
+from amadeus_auth import BASE_URL, get_token
+
 AMADEUS_KEY = os.environ.get("AMADEUS_API_KEY")
 AMADEUS_SECRET = os.environ.get("AMADEUS_API_SECRET")
-BASE_URL = os.environ.get("AMADEUS_BASE_URL", "https://test.api.amadeus.com")
 
 ORIGIN = "ORD"
 
-# (display name, IATA city/airport code, category)
-DESTINATIONS = [
-    ("Boston, MA", "BOS", "visited"),
-    ("New Orleans, LA", "MSY", "visited"),
-    ("Charleston, SC", "CHS", "visited"),
-    ("Austin, TX", "AUS", "visited"),
-    ("Washington, DC", "WAS", "visited"),
-    ("Savannah, GA", "SAV", "suggested"),
-    ("Nashville, TN", "BNA", "suggested"),
-    ("San Antonio, TX", "SAT", "suggested"),
-    ("Richmond, VA", "RIC", "suggested"),
-    ("Asheville, NC", "AVL", "suggested"),
-    ("Philadelphia, PA", "PHL", "suggested"),
-    ("Memphis, TN", "MEM", "suggested"),
-    ("St. Augustine, FL", "JAX", "suggested"),  # nearest commercial airport
-]
+DESTINATIONS_FILE = Path(__file__).resolve().parent.parent / "data" / "destinations.json"
 
 
-def get_token():
-    resp = requests.post(
-        f"{BASE_URL}/v1/security/oauth2/token",
-        data={
-            "grant_type": "client_credentials",
-            "client_id": AMADEUS_KEY,
-            "client_secret": AMADEUS_SECRET,
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    return resp.json()["access_token"]
+def load_destinations():
+    with open(DESTINATIONS_FILE) as f:
+        return json.load(f)
 
 
 def next_friday_weeks_out(weeks):
@@ -155,13 +134,14 @@ def main():
         print("Missing AMADEUS_API_KEY / AMADEUS_API_SECRET", file=sys.stderr)
         sys.exit(1)
 
-    token = get_token()
+    token = get_token(AMADEUS_KEY, AMADEUS_SECRET)
 
     depart = next_friday_weeks_out(5)
     ret = depart + datetime.timedelta(days=2)
 
     rows = []
-    for name, code, category in DESTINATIONS:
+    for dest in load_destinations():
+        name, code, category = dest["name"], dest["code"], dest["category"]
         flight_price, flight_note = get_flight_price(token, code, depart.isoformat(), ret.isoformat())
         time.sleep(0.3)
         hotel_price, hotel_note = get_hotel_price(token, code, depart.isoformat(), ret.isoformat())

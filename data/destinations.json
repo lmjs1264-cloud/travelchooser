@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Boston, MA",
+    "code": "BOS",
+    "category": "visited"
+  },
+  {
+    "name": "New Orleans, LA",
+    "code": "MSY",
+    "category": "visited"
+  },
+  {
+    "name": "Charleston, SC",
+    "code": "CHS",
+    "category": "visited"
+  },
+  {
+    "name": "Austin, TX",
+    "code": "AUS",
+    "category": "visited"
+  },
+  {
+    "name": "Washington, DC",
+    "code": "WAS",
+    "category": "visited"
+  },
+  {
+    "name": "Savannah, GA",
+    "code": "SAV",
+    "category": "suggested"
+  },
+  {
+    "name": "Nashville, TN",
+    "code": "BNA",
+    "category": "suggested"
+  },
+  {
+    "name": "San Antonio, TX",
+    "code": "SAT",
+    "category": "suggested"
+  },
+  {
+    "name": "Richmond, VA",
+    "code": "RIC",
+    "category": "suggested"
+  },
+  {
+    "name": "Asheville, NC",
+    "code": "AVL",
+    "category": "suggested"
+  },
+  {
+    "name": "Philadelphia, PA",
+    "code": "PHL",
+    "category": "suggested"
+  },
+  {
+    "name": "Memphis, TN",
+    "code": "MEM",
+    "category": "suggested"
+  },
+  {
+    "name": "St. Augustine, FL",
+    "code": "JAX",
+    "category": "suggested"
+  }
+]
