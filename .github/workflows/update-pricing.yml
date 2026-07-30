@@ -1,0 +1,36 @@
+name: Update Travel Pricing
+
+on:
+  schedule:
+    # Daily at 13:00 UTC (~8am Chicago). GitHub only fires `schedule` events
+    # from the default branch, so this activates once merged to main.
+    - cron: '0 13 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  update-pricing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Fetch latest pricing
+        run: python scripts/fetch_pricing.py
+        env:
+          AMADEUS_API_KEY: ${{ secrets.AMADEUS_API_KEY }}
+          AMADEUS_API_SECRET: ${{ secrets.AMADEUS_API_SECRET }}
+
+      - name: Commit updated pricing
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add PRICING.md
+          git diff --quiet --cached || git commit -m "Update daily pricing data"
+          git push
